@@ -9,6 +9,8 @@
         );
     }
 
+
+
     if (chrome.declarativeContent) {
         chrome.runtime.onInstalled.addListener(function () {
             chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
@@ -30,7 +32,30 @@
         doInCurrentTab(function(tab) { chrome.pageAction.show(tab.id); });
     }
 
+    var contextMenuItem = {
+        "id": "copyPdfTitle",
+        "title": "Copy paper to clipboard",
+        "contexts": ["all"],
+    };
+
     chrome.pageAction.onClicked.addListener(function (tab) {
         chrome.tabs.sendMessage(tab.id, 'update-page-title.');
     });
+
+    chrome.contextMenus.create(contextMenuItem);
+
+    chrome.contextMenus.onClicked.addListener(function (clickData) {
+        if (clickData.menuItemId == "copyPdfTitle") {
+            // call context script function
+            chrome.tabs.query({
+                "active": true,
+                "currentWindow": true
+            }, function (tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    "functiontoInvoke": "copyPaperToClipboard"
+                });
+            });
+        }
+    });
+
 })();

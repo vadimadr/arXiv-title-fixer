@@ -143,4 +143,67 @@
         setTitleForAbs();
     }
 
+    function copyToClipboard(content) {
+        var copyFrom = document.createElement("div");
+
+        for (const item in content) {
+            var element = content[item];
+            
+            if (element.type == "text") {
+                var tagType = element.hasOwnProperty("tag") ? element.tag : "sapn";
+                var tag = document.createElement(tagType);
+                tag.textContent = element.text;
+                copyFrom.appendChild(tag);
+            } else if (element.type == "link") {
+                var tag = document.createElement("a");
+                tag.href = element.href;
+                tag.textContent = element.text;
+                copyFrom.appendChild(tag);
+            }
+        }
+
+        document.body.appendChild(copyFrom);
+        const range = document.createRange();
+        range.selectNode(copyFrom);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        document.execCommand('copy');
+        document.body.removeChild(copyFrom);
+    }
+
+    function copyPaperToClipboard() {
+        var title = document.title;
+
+        // get paper id:
+        var pathComponents = window.location.pathname.split('/');
+        var pdfName = pathComponents[pathComponents.length - 1];
+        var paperId = /([^v]*)(v[0-9]*)?\.pdf/.exec(pdfName)[1];
+        var papersProps = {
+            year: "20" + paperId.slice(0, 2),
+            month: paperId.slice(2, 4)
+        };
+
+        var pdfLink = window.location.pathname;
+        var absLink = pdfLink.replace("/pdf/", "/abs/").replace(".pdf", "");
+        var paperTime = papersProps.year + "." + papersProps.month;
+
+        
+        copyToClipboard([
+            {type: "text", tag: "b", text: title},
+            {type: "text", text: " [" + paperTime + ": "},
+            {type: "link", href: pdfLink, text: "pdf"},
+            {type: "text", text: " | "},
+            {type: "link", href: absLink, text: "abs"},
+            {type: "text", text: "]"},
+        ]);
+    }
+
+    chrome.extension.onMessage.addListener(function (message, sender, callback) {
+        if (message.functiontoInvoke == "copyPaperToClipboard") {
+            copyPaperToClipboard();
+        }
+    });
+
 })();
